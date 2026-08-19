@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Baseball 50-Square Fundraiser</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #b30000; /* Baseball Red */
+        }
+
+        .instructions {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* The Grid Layout */
+        .grid-container {
+            display: grid;
+            /* Forces exactly 10 columns to make a perfect block */
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Individual Square Styling */
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Changed height and added aspect-ratio to keep them perfectly square */
+            aspect-ratio: 1 / 1; 
+            background-color: #004080; /* Baseball Navy */
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            user-select: none;
+        }
+
+        .square:hover {
+            background-color: #0059b3;
+            transform: scale(1.05);
+        }
+
+        /* Scratched Off Styling */
+        .square.scratched {
+            background-color: #cccccc;
+            color: #666666;
+            text-decoration: line-through;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Mobile Adjustments - snaps to a perfect 5x10 grid on phones */
+        @media (max-width: 600px) {
+            .grid-container {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+            }
+            .square {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>⚾ Help send Henry to Cooperstown! ⚾</h1>
+    <p class="instructions">Pick a square! You will be redirected to our payment page. Once claimed, the square will be scratched off.</p>
+
+    <div class="grid-container" id="board">
+        <!-- Squares will be generated here by JavaScript -->
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const totalSquares = 50;
+        // Replace this URL with your actual PayPal, Venmo, Square, or Google Form link
+        const paymentURL = "https://paypal.me/chriswong02"; 
+
+        const board = document.getElementById('board');
+
+        // Initialize the board
+        function createBoard() {
+            // Get already scratched squares from Local Storage (for testing)
+            let scratchedSquares = JSON.parse(localStorage.getItem('scratchedSquares')) || [];
+
+            for (let i = 1; i <= totalSquares; i++) {
+                const square = document.createElement('div');
+                square.classList.add('square');
+                square.innerText = i;
+                square.dataset.number = i; // Store the number in a data attribute
+
+                // Check if this square was already scratched off
+                if (scratchedSquares.includes(i)) {
+                    square.classList.add('scratched');
+                } else {
+                    // Only add click event if it's NOT scratched
+                    square.addEventListener('click', () => handleSquareClick(i, square));
+                }
+
+                board.appendChild(square);
+            }
+        }
+
+        // Handle the click event
+        function handleSquareClick(squareNumber, squareElement) {
+            // 1. Confirm with the user
+            const confirmPick = confirm(`Do you want to claim Square #${squareNumber}? You will be taken to the payment page.`);
+            
+            if (confirmPick) {
+                const paymentWindow = window.open(paymentURL, '_blank');
+
+                if (paymentWindow) {
+                    // 2. Mark as scratched visually
+                    squareElement.classList.add('scratched');
+
+                    // 3. Save to local storage so it stays scratched on refresh
+                    let scratchedSquares = JSON.parse(localStorage.getItem('scratchedSquares')) || [];
+                    if (!scratchedSquares.includes(squareNumber)) {
+                        scratchedSquares.push(squareNumber);
+                        localStorage.setItem('scratchedSquares', JSON.stringify(scratchedSquares));
+                    }
+
+                    // Remove the event listener so it can't be clicked again
+                    squareElement.replaceWith(squareElement.cloneNode(true));
+                }
+            }
+        }
+
+        // Build the board when the page loads
+        createBoard();
+    </script>
+</body>
+</html>
